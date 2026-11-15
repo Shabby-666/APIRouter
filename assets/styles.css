@@ -806,6 +806,73 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+
+/* ---------- 筛选栏 ---------- */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 20px;
+  margin-top: 24px;
+  padding: 14px 0 4px;
+  border-top: 1px solid var(--line-soft);
+}
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+  flex: 1 1 180px;
+  max-width: 280px;
+}
+.filter-field span {
+  color: var(--faint);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+}
+.filter-field select {
+  width: 100%;
+  padding: 8px 28px 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 12px;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='m1 1 4 4 4-4' fill='none' stroke='%239a9384' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-position: calc(100% - 10px) 50%;
+  background-size: 10px 6px;
+  background-repeat: no-repeat;
+  transition: border-color 0.15s;
+}
+.filter-field select:focus {
+  border-color: var(--ink-soft);
+}
+.filter-reset {
+  margin-left: auto;
+  align-self: flex-end;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .filter-bar {
+    gap: 12px 14px;
+    margin-top: 18px;
+  }
+  .filter-field {
+    min-width: 0;
+    flex: 1 1 calc(50% - 8px);
+    max-width: none;
+  }
+  .filter-reset {
+    margin-left: 0;
+    width: 100%;
+    text-align: left;
+  }
+}
+
 /* ---------- 分类过滤 ---------- */
 .filters {
   display: flex;

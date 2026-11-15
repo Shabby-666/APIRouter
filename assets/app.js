@@ -15,6 +15,8 @@
     endpoints: [],
     categories: [],
     cat: 'all',
+    provider: 'all',
+    rtype: 'all',
     query: '',
     onlineOnly: false,
     health: null,
@@ -402,6 +404,8 @@
   function matches(endpoint) {
     const q = state.query.trim().toLowerCase();
     if (state.cat !== 'all' && endpoint.category !== state.cat) return false;
+    if (state.provider !== 'all' && endpoint.provider !== state.provider) return false;
+    if (state.rtype !== 'all' && endpoint.responseType !== state.rtype) return false;
     if (state.onlineOnly && state.health) {
       const health = state.health.results[endpoint.id];
       if (!health || !health.ok) return false;
@@ -413,6 +417,8 @@
       endpoint.desc,
       endpoint.category,
       categoryMeta(endpoint.category).name,
+      endpoint.provider || '',
+      endpoint.responseType || '',
       ...(endpoint.tags || []),
       ...(endpoint.params || []).map((p) => `${p.key} ${p.label} ${p.desc}`),
     ]
@@ -463,6 +469,38 @@
       </article>`;
   }
 
+
+  function syncFilterControls() {
+    const cat = document.getElementById('filterCategory');
+    if (cat) cat.value = state.cat;
+    const prov = document.getElementById('filterProvider');
+    if (prov) prov.value = state.provider;
+    const rtype = document.getElementById('filterType');
+    if (rtype) rtype.value = state.rtype;
+  }
+
+  function renderFilterOptions() {
+    const catSel = document.getElementById('filterCategory');
+    if (catSel) {
+      const opts = ['<option value="all">全部分类</option>'].concat(
+        state.categories.map((c) => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>')
+      );
+      catSel.innerHTML = opts.join('');
+      catSel.value = state.cat;
+    }
+    const provSel = document.getElementById('filterProvider');
+    if (provSel) {
+      const providers = Array.from(new Set(state.endpoints.map((e) => e.provider || '未知'))).sort((a,b)=>{
+        if (a === '本地') return 1; if (b === '本地') return -1; return a.localeCompare(b);
+      });
+      provSel.innerHTML = ['<option value="all">全部提供商</option>'].concat(
+        providers.map((p) => '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>')
+      ).join('');
+      provSel.value = state.provider;
+    }
+    syncFilterControls();
+  }
+
   function renderFilters() {
     const all = state.endpoints.length;
     const items = [
@@ -479,6 +517,7 @@
       }),
     ];
     $('#filters').innerHTML = items.join('');
+    syncFilterControls();
   }
 
   function renderGrid() {
@@ -1087,6 +1126,36 @@
       timer = setTimeout(renderGrid, 90);
     });
 
+    const filterCategory = $('#filterCategory');
+    if (filterCategory) filterCategory.addEventListener('change', (event) => {
+      state.cat = event.target.value || 'all';
+      renderFilters();
+      renderGrid();
+    });
+    const filterProvider = $('#filterProvider');
+    if (filterProvider) filterProvider.addEventListener('change', (event) => {
+      state.provider = event.target.value || 'all';
+      renderGrid();
+    });
+    const filterType = $('#filterType');
+    if (filterType) filterType.addEventListener('change', (event) => {
+      state.rtype = event.target.value || 'all';
+      renderGrid();
+    });
+    const resetFilters = $('#resetFilters');
+    if (resetFilters) resetFilters.addEventListener('click', () => {
+      state.cat = 'all';
+      state.provider = 'all';
+      state.rtype = 'all';
+      state.query = '';
+      state.onlineOnly = false;
+      const search = $('#search'); if (search) search.value = '';
+      const online = $('#onlineOnly'); if (online) online.classList.remove('active');
+      syncFilterControls();
+      renderFilters();
+      renderGrid();
+    });
+
     $('#filters').addEventListener('click', (event) => {
       const button = event.target.closest('[data-cat]');
       if (!button) return;
@@ -1123,9 +1192,14 @@
 
     $('#clearSearch').addEventListener('click', () => {
       state.query = '';
+      state.cat = 'all';
+      state.provider = 'all';
+      state.rtype = 'all';
       state.onlineOnly = false;
       $('#search').value = '';
       $('#onlineOnly').classList.remove('active');
+      syncFilterControls();
+      renderFilters();
       renderGrid();
     });
 
@@ -1253,6 +1327,7 @@
       state.categories = catalog.categories;
 
       renderStats();
+      renderFilterOptions();
       renderFilters();
       renderGrid();
       refreshImage();

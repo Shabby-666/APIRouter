@@ -205,6 +205,26 @@
           </div>
         </header>
 
+        <div class="filter-bar" id="filterBar" aria-label="接口筛选">
+          <label class="filter-field">
+            <span>功能分类</span>
+            <select id="filterCategory" aria-label="按功能分类筛选"></select>
+          </label>
+          <label class="filter-field">
+            <span>上游提供商</span>
+            <select id="filterProvider" aria-label="按上游提供商筛选"></select>
+          </label>
+          <label class="filter-field">
+            <span>返回类型</span>
+            <select id="filterType" aria-label="按返回类型筛选">
+              <option value="all">全部</option>
+              <option value="image">图片</option>
+              <option value="json">JSON</option>
+              <option value="text">文本</option>
+            </select>
+          </label>
+          <button class="text-btn filter-reset" id="resetFilters" type="button">重置筛选</button>
+        </div>
         <div class="filters" id="filters" role="tablist" aria-label="接口分类"></div>
         <div class="api-list" id="grid" aria-live="polite"></div>
         <div class="empty-state" id="emptyState" hidden>
