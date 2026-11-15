@@ -4,7 +4,7 @@
 
 API Router 把散落在全网的公共接口（随机图片、今日天气、网易云音乐、微博热搜、汇率行情、IP 归属地、论文检索、本地工具……）收敛成统一的 `/api/r/:id` 形式，并补上缓存、超时、编码转换与错误兜底。
 
-- **134 个接口 / 9 大分类**，全部无需注册、无需 API Key
+- **135 个接口 / 9 大分类**，全部无需注册、无需 API Key
 - 亮 / 暗双主题，默认跟随系统，也可手动切换并记住选择
 - 内置调试台：参数表单、真实响应、cURL / JavaScript / Python 代码一键复制
 - 上游健康监测：实时探测可用性，坏接口一眼可见
@@ -47,6 +47,9 @@ curl -sL "https://your-app.vercel.app/api/r/alcy-image?style=ycy" -o anime.webp
 # 网易云搜索
 curl -s "https://your-app.vercel.app/api/r/netease-search?keywords=晴天&limit=5"
 
+# 免费发信（自定义收件人、主题、正文）
+curl -s "https://your-app.vercel.app/api/r/mail-send?to=test@example.com&subject=测试邮件&body=这是一封测试邮件&from_name=API%20Router"
+
 # 只取返回 JSON 里的某个字段
 curl -s "https://your-app.vercel.app/api/r/netease-search?keywords=晴天&__pick=data.songs.0.name"
 ```
@@ -74,17 +77,17 @@ curl -s "https://your-app.vercel.app/api/r/netease-search?keywords=晴天&__pick
 
 ## 接口分类
 
-| 分类 | 代表接口 |
-| --- | --- |
-| 随机图片 | Lorem Picsum、必应每日壁纸、UAPI 随机图片、UAPI 每日新闻图、二次元随机图、樱道随机图、MtF 随机图、猫 / 狗 / 狐狸 / 鸭鸭、咖啡图、随机头像、Gravatar 头像、二维码、条形码、占位图 |
-| 天气环境 | Open-Meteo 实时 / 逐小时 / 7 天、UAPI 天气预报、空气质量、地理编码、wttr.in、海洋海浪、美国气象局 |
-| 文字文艺 | 一言、UAPI 一言、UAPI 答案之书、今日诗词、英文名言、冷笑话、冷知识、词典、翻译、程序员历史上的今天、网页 Markdown、名字猜年龄 / 国籍 |
-| 音乐 | 网易云搜索、歌曲详情、歌词、热评、排行榜、歌单、新歌推荐、播放地址 |
-| 开发者 | GitHub、npm、Hacker News、JSONPlaceholder、HTTPBin、短链接、真随机数、IP 查询、DNS 解析、行政区划/Adcode、世界时间、arXiv、Crossref |
-| 金融行情 | 实时 / 历史汇率、全球牌价、CoinGecko、币安行情、A 股实时行情 |
-| 生活资讯 | 每天 60 秒、UAPI 全网热榜、微博 / 抖音 / 知乎 / B 站热搜、实时电影票房、Epic 免费游戏、法定节假日、UAPI 农历时间、UAPI 世界时间、ISS 位置、地震速报、SpaceX、大都会博物馆 |
-| 二次元 | Jikan 动漫数据库、宝可梦图鉴 |
-| 本地工具 | UUID、哈希、Base64、时间戳、密码、随机数、配色、Lorem、URL 编解码、JSON 格式化 |
+| 分类 | 数量 | 代表接口 |
+| --- | ---: | --- |
+| 随机图片 | 19 | Lorem Picsum、必应每日壁纸、二次元/樱道/MtF 随机图、猫 / 狗 / 狐狸 / 鸭鸭 / Random Dog、咖啡图、随机头像、Imgflip Meme 模板、二维码、条形码、占位图 |
+| 天气环境 | 8 | Open-Meteo 实时 / 预报、空气质量、地理编码、wttr.in、海洋海浪、美国气象局、日出日落 |
+| 文字文艺 | 28 | 一言、今日诗词、Wikipedia 摘要、Open Library 检索、名言 / 笑话 / 建议、词典、Datamuse、翻译、网页 Markdown、名字猜性别 / 年龄 / 国籍、圣经查询 |
+| 音乐 | 8 | 网易云搜索、歌曲详情、歌词、热评、排行榜、歌单、新歌推荐、播放地址 |
+| 开发者 | 24 | GitHub、npm、Hacker News、JSONPlaceholder、DummyJSON、HTTPBin、Wayback 存档查询、短链接、真随机数、IP 查询、世界时间、arXiv、Crossref、世界银行数据、免费发信 API |
+| 金融行情 | 6 | 实时 / 历史汇率、全球牌价、CoinGecko、币安行情、A 股实时行情 |
+| 生活资讯 | 30 | 每天 60 秒、热搜榜、法定节假日、REST Countries、Open Trivia、菜谱/鸡尾酒、艺术藏品、食品条码、邮编/酒厂/大学检索、水果信息、英国银行假日、ISS/地震/SpaceX、大都会博物馆 |
+| 二次元 | 2 | Jikan 动漫数据库、宝可梦图鉴 |
+| 本地工具 | 10 | UUID、哈希、Base64、时间戳、密码、随机数、配色、Lorem、URL 编解码、JSON 格式化 |
 
 完整清单与实时参数请访问站点首页，或直接请求 `GET /api`。
 
