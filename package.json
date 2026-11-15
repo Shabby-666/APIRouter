@@ -4,8 +4,8 @@
   "private": true,
   "description": "全网免费 API 中转站：一个域名调用随机图片、天气、音乐、热搜、汇率等免费接口",
   "scripts": {
-    "dev": "node server.mjs",
-    "start": "node server.mjs"
+    "dev": "node dev.mjs",
+    "start": "node dev.mjs"
   },
   "engines": {
     "node": ">=18"

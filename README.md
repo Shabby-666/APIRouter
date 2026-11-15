@@ -104,7 +104,7 @@ curl -s "https://your-app.vercel.app/api/r/netease-search?keywords=晴天&__pick
 │   └── http.js           # CORS / 限流 / 响应工具
 ├── assets/               # 样式、脚本、图标
 ├── index.html            # 单页站点
-├── server.mjs            # 本地开发服务器
+├── dev.mjs               # 本地开发服务器
 └── vercel.json
 ```
 
