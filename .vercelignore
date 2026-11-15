@@ -1,0 +1,6 @@
+node_modules
+.git
+.gitignore
+server.mjs
+*.log
+.DS_Store

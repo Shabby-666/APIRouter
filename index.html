@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>API Router · 全网免费 API 中转站</title>
+    <meta
+      name="description"
+      content="API Router 把随机图片、今日天气、网易云音乐、微博热搜、汇率行情、IP 查询等 90 个免费 API 聚合到一个域名：免 Key、统一 CORS、统一缓存、在线调试。"
+    />
+    <meta name="theme-color" id="themeColor" content="#f7f4ee" />
+    <meta property="og:title" content="API Router · 全网免费 API 中转站" />
+    <meta
+      property="og:description"
+      content="一个域名，调用全网免费 API。随机图片 / 天气 / 音乐 / 热搜 / 汇率 / 开发工具，全部免 Key，可在线调试。"
+    />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/styles.css" />
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("apirouter:theme");
+          var theme =
+            saved === "dark" || saved === "light"
+              ? saved
+              : window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.style.colorScheme = theme;
+        } catch (error) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="#top" aria-label="API Router 首页">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="2.1" />
+              <circle cx="5" cy="5" r="2.1" />
+              <circle cx="19" cy="5" r="2.1" />
+              <circle cx="5" cy="19" r="2.1" />
+              <circle cx="19" cy="19" r="2.1" />
+              <path d="m6.6 6.6 3.8 3.8M17.4 6.6l-3.8 3.8M6.6 17.4l3.8-3.8M17.4 17.4l-3.8-3.8" />
+            </svg>
+          </span>
+          <span class="brand-text">API <em>Router</em></span>
+        </a>
+
+        <nav class="site-nav" aria-label="主导航">
+          <a href="#catalog">接口目录</a>
+          <a href="#docs">接入方式</a>
+          <a href="#about">说明</a>
+        </nav>
+
+        <div class="header-right">
+          <button class="health-pill" id="healthPill" type="button" title="上游可用状态">
+            <i class="dot" aria-hidden="true"></i>
+            <span id="healthText">检测中</span>
+            <span class="health-short" id="healthShort">…</span>
+          </button>
+          <a class="header-link" href="/api" target="_blank" rel="noreferrer">JSON</a>
+          <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换主题">
+            <span class="icon-moon" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />
+              </svg>
+            </span>
+            <span class="icon-sun" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4" />
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="heroTitle">
+        <div class="hero-grid">
+          <div class="hero-main">
+            <p class="dateline"><span id="todayDate">今天</span></p>
+            <h1 id="heroTitle">把散落全网的免费接口，<br />收进一个域名。</h1>
+            <p class="lede">
+              随机图片、天气、网易云音乐、热搜、汇率与开发工具。全部免 Key，统一 CORS 与缓存；
+              不传参数时自动使用示例值，<code>/api/r/weather</code> 也能直接拿到北京天气。
+            </p>
+
+            <form class="search" id="searchForm" role="search" onsubmit="return false">
+              <span class="search-icon" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="6" />
+                  <path d="m16 16 4.5 4.5" />
+                </svg>
+              </span>
+              <input
+                id="search"
+                type="search"
+                placeholder="搜索接口，例如 天气、歌词、UUID"
+                autocomplete="off"
+                spellcheck="false"
+                aria-label="搜索接口"
+              />
+              <kbd>/</kbd>
+            </form>
+            <div class="quick-tags" id="quickTags"></div>
+
+            <p class="hero-meta">
+              <span class="meta-group">已收录 <b id="heroBadge">…</b> · 0 个 API Key</span>
+              <span class="meta-group">120 次/分/IP · <span id="lastDebug">尚未调试</span></span>
+            </p>
+          </div>
+
+          <aside class="live" aria-label="接口实时示例">
+            <div class="live-head">
+              <span>此刻返回</span>
+              <span class="live-time" id="liveClock">--:--</span>
+            </div>
+
+            <article class="live-row">
+              <div class="live-label">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <circle cx="8.5" cy="9.5" r="1.5" />
+                  <path d="m3 15 5-4 4 3 3-2 6 5" />
+                </svg>
+                <span>随机图片</span>
+                <button class="text-btn" id="refreshImage" type="button">换一张</button>
+              </div>
+              <a class="live-thumb" id="demoImageLink" href="#" target="_blank" rel="noreferrer">
+                <img id="demoImage" alt="随机图片示例" loading="lazy" />
+              </a>
+              <code>/api/r/alcy-image?style=ycy</code>
+            </article>
+
+            <article class="live-row">
+              <div class="live-label">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9.5 6H5v6h4.5v3H5M19.5 6H15v6h4.5v3H15" />
+                </svg>
+                <span>一言</span>
+                <button class="text-btn" id="refreshQuote" type="button">换一句</button>
+              </div>
+              <blockquote id="demoQuote">正在从上游取一句话…</blockquote>
+              <p class="live-foot" id="demoQuoteFrom">—</p>
+            </article>
+
+            <article class="live-row">
+              <div class="live-label">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="8" cy="8" r="3" />
+                  <path d="M8 2.8V4M8 12v1.2M3.2 8H4.4M11.6 8h1.2M4.6 4.6l.9.9M10.5 10.5l.9.9M11.4 4.6l-.9.9" />
+                  <path d="M9 19h8.5a3 3 0 0 0 .4-6 4.4 4.4 0 0 0-8.4-1.2A3.4 3.4 0 0 0 9 19Z" />
+                </svg>
+                <span>北京天气</span>
+                <span class="live-foot" id="demoWeatherRange">北京</span>
+              </div>
+              <div class="live-weather">
+                <strong id="demoTemp">—</strong>
+                <span id="demoWeatherText">读取中</span>
+              </div>
+              <p class="live-foot" id="demoWeatherExtra">正在请求 Open-Meteo</p>
+            </article>
+          </aside>
+        </div>
+
+        <dl class="stats" aria-label="站点数据">
+          <div>
+            <dt>免费接口</dt>
+            <dd id="statTotal">—</dd>
+          </div>
+          <div>
+            <dt>功能分类</dt>
+            <dd id="statCats">—</dd>
+          </div>
+          <div>
+            <dt>当前可用</dt>
+            <dd id="statUp">—</dd>
+          </div>
+          <div>
+            <dt>平均上游耗时</dt>
+            <dd id="statLatency">—</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="section" id="catalog">
+        <header class="section-head">
+          <div>
+            <p class="eyebrow">接口目录</p>
+            <h2>按用途挑一个</h2>
+            <p>全部接口已带示例参数。点「调试」发送真实请求，点「复制」拿到可直接运行的地址。</p>
+          </div>
+          <div class="catalog-tools">
+            <span class="result-count" id="resultCount">—</span>
+            <button class="text-btn" id="onlineOnly" type="button">仅看在线</button>
+            <button class="text-btn" id="refreshHealth" type="button">重新检测</button>
+          </div>
+        </header>
+
+        <div class="filters" id="filters" role="tablist" aria-label="接口分类"></div>
+        <div class="api-list" id="grid" aria-live="polite"></div>
+        <div class="empty-state" id="emptyState" hidden>
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6" />
+            <path d="m16 16 4.5 4.5" />
+          </svg>
+          <h3>没有匹配的接口</h3>
+          <p>换个关键词，或清空搜索与筛选条件。</p>
+          <button class="text-btn" id="clearSearch" type="button">清空条件</button>
+        </div>
+      </section>
+
+      <section class="section" id="docs">
+        <header class="section-head">
+          <div>
+            <p class="eyebrow">接入方式</p>
+            <h2>三步拿到数据</h2>
+            <p>普通 GET 请求，无需注册、无需鉴权，浏览器里可以直接调用。</p>
+          </div>
+        </header>
+
+        <div class="docs-grid">
+          <div class="docs-main">
+            <div class="code-panel">
+              <div class="tabs" data-tabs="quick" role="tablist" aria-label="代码示例语言">
+                <button type="button" data-tab="curl" class="active" role="tab">cURL</button>
+                <button type="button" data-tab="fetch" role="tab">JavaScript</button>
+                <button type="button" data-tab="python" role="tab">Python</button>
+              </div>
+              <pre class="code-block"><code id="quickCode"></code></pre>
+              <div class="code-foot">
+                <span>示例：随机一言</span>
+                <button class="text-btn" id="copyQuick" type="button">复制代码</button>
+              </div>
+            </div>
+
+            <ol class="steps">
+              <li>
+                <span>01</span>
+                <div>
+                  <strong>挑一个接口</strong>
+                  <p>在上方目录搜索「天气」「网易云」或按分类浏览，点开查看参数与上游文档。</p>
+                </div>
+              </li>
+              <li>
+                <span>02</span>
+                <div>
+                  <strong>直接发送</strong>
+                  <p>参数已填好示例值。发送后可以看到状态码、耗时、响应头与真实内容。</p>
+                </div>
+              </li>
+              <li>
+                <span>03</span>
+                <div>
+                  <strong>复制到项目里</strong>
+                  <p>cURL、JavaScript、Python 任选一种，粘进代码即可运行。</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="docs-side">
+            <section class="doc-block">
+              <h3>通用参数</h3>
+              <dl class="param-list">
+                <div>
+                  <dt><code>__pick</code></dt>
+                  <dd>从 JSON 中只取一个字段，支持点号与数组下标，如 <code>data.songs.0.name</code>。</dd>
+                </div>
+                <div>
+                  <dt><code>__raw=1</code></dt>
+                  <dd>跳过本站加工，返回上游原始响应。</dd>
+                </div>
+                <div>
+                  <dt><code>__download=1</code></dt>
+                  <dd>以附件形式下载图片或文件。</dd>
+                </div>
+                <div>
+                  <dt><code>任意上游参数</code></dt>
+                  <dd>原样透传。文档里的参数名直接写进 query 即可。</dd>
+                </div>
+                <div>
+                  <dt><code>缺省参数</code></dt>
+                  <dd>没传的参数自动使用示例值，所以 <code>/api/r/weather</code> 也能直接返回结果。</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section class="doc-block">
+              <h3>响应头</h3>
+              <dl class="param-list">
+                <div>
+                  <dt><code>X-Router-Status</code></dt>
+                  <dd>上游 HTTP 状态码。</dd>
+                </div>
+                <div>
+                  <dt><code>X-Router-Latency</code></dt>
+                  <dd>上游耗时，单位毫秒。</dd>
+                </div>
+                <div>
+                  <dt><code>X-Router-Upstream</code></dt>
+                  <dd>实际请求的上游域名。</dd>
+                </div>
+                <div>
+                  <dt><code>X-Router-RateLimit-Remaining</code></dt>
+                  <dd>当前分钟窗口的剩余额度。</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section class="doc-block">
+              <h3>部署到 Vercel</h3>
+              <pre class="deploy-code"><code>npm i -g vercel
+vercel --prod</code></pre>
+              <p>零依赖、零构建。静态页加三组 Serverless Function，推上去即可运行。</p>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="section about" id="about">
+        <div class="about-grid">
+          <div class="about-copy">
+            <p class="eyebrow">说明</p>
+            <h2>它是一个白名单中转，<br />不是开放代理</h2>
+            <p>
+              API Router 把协议各异、CORS 各异的公共接口收敛成统一的
+              <code>/api/r/:id</code> 路径，并补上缓存、超时、编码转换与错误兜底。
+            </p>
+            <p>
+              上游地址全部写在服务端注册表里，客户端只能访问登记过的接口，因此不会被拿来打内网，
+              也不会替你携带任何密钥。数据版权归各上游所有，本站仅做技术中转。
+            </p>
+            <p class="about-meta">
+              <span>43 个上游域名</span>
+              <span>白名单转发</span>
+              <span>GBK 自动转码</span>
+              <span>零依赖</span>
+            </p>
+          </div>
+
+          <ul class="feature-list">
+            <li>
+              <span class="feature-icon" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="8.5" />
+                  <path d="M3.5 12h17M12 3.5c2.5 2.5 3.8 5.4 3.8 8.5s-1.3 6-3.8 8.5c-2.5-2.5-3.8-5.4-3.8-8.5S9.5 6 12 3.5Z" />
+                </svg>
+              </span>
+              <div>
+                <h3>一个入口</h3>
+                <p>不用记几十个域名，全部走 <code>/api/r/{id}</code>。</p>
+              </div>
+            </li>
+            <li>
+              <span class="feature-icon" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="m5 7 5 5-5 5M12 17h7" />
+                </svg>
+              </span>
+              <div>
+                <h3>CORS 全开</h3>
+                <p>浏览器、小程序、桌面端都能直接请求，无需代理层。</p>
+              </div>
+            </li>
+            <li>
+              <span class="feature-icon" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M12 3 2.8 20h18.4L12 3Z" />
+                  <path d="M12 9v5M12 17v.5" />
+                </svg>
+              </span>
+              <div>
+                <h3>错误可读</h3>
+                <p>上游超时、限流、编码异常都会转成明确的 JSON 错误。</p>
+              </div>
+            </li>
+            <li>
+              <span class="feature-icon" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M3 12h4l2.5-7 4 14L16 12h5" />
+                </svg>
+              </span>
+              <div>
+                <h3>健康监测</h3>
+                <p>实时探测上游可用性与耗时，坏接口在目录里直接标出。</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <strong>API Router</strong>
+          <span>全网免费接口，一处调用。不存储任何上游数据。</span>
+        </div>
+        <nav class="footer-links" aria-label="页脚链接">
+          <a href="/api" target="_blank" rel="noreferrer">接口清单 JSON</a>
+          <a href="/api/health" target="_blank" rel="noreferrer">健康状态</a>
+          <a href="#docs">接入方式</a>
+          <a href="#top">回到顶部</a>
+        </nav>
+      </div>
+      <p class="footer-note">
+        接口可用性由第三方服务决定，请遵守各上游服务条款，勿用于商业或违法用途。
+        <span id="footerYear">2026</span> · API Router
+      </p>
+    </footer>
+
+    <div class="modal" id="modal" hidden>
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <header class="modal-head">
+          <span class="modal-icon" id="modalIcon" aria-hidden="true"></span>
+          <div class="modal-title">
+            <h3 id="modalTitle">接口调试</h3>
+            <code id="modalPath">/api/r/</code>
+          </div>
+          <div class="modal-head-actions">
+            <a class="text-btn" id="modalDocs" href="#" target="_blank" rel="noreferrer">上游文档</a>
+            <button class="icon-btn" type="button" data-close aria-label="关闭">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 5l14 14M19 5 5 19" />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="modal-body">
+          <div class="modal-left">
+            <p class="modal-desc" id="modalDesc"></p>
+            <p class="modal-note" id="modalNote" hidden></p>
+            <form class="param-form" id="paramForm" onsubmit="return false"></form>
+
+            <div class="url-preview">
+              <span class="url-label">GET</span>
+              <code id="urlPreview">/api/r/</code>
+              <button class="text-btn" id="copyUrl" type="button">复制</button>
+            </div>
+
+            <div class="modal-actions">
+              <button class="btn btn-primary" id="sendBtn" type="button">
+                <span class="btn-spinner" aria-hidden="true"></span>
+                <span class="btn-label">发送请求</span>
+                <kbd>Ctrl↵</kbd>
+              </button>
+              <button class="text-btn" id="resetBtn" type="button">重置参数</button>
+              <a class="text-btn" id="openUrl" href="#" target="_blank" rel="noreferrer">新窗口打开</a>
+            </div>
+
+            <div class="meta-chips" id="modalMeta"></div>
+
+            <div class="snippet-card">
+              <div class="tabs" data-tabs="snippet" role="tablist" aria-label="代码片段语言">
+                <button type="button" data-tab="curl" class="active" role="tab">cURL</button>
+                <button type="button" data-tab="fetch" role="tab">JavaScript</button>
+                <button type="button" data-tab="python" role="tab">Python</button>
+              </div>
+              <pre class="code-block"><code id="snippetCode"></code></pre>
+              <div class="code-foot">
+                <span id="snippetHint">复制即可运行</span>
+                <button class="text-btn" id="copySnippet" type="button">复制代码</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-right">
+            <div class="response-head">
+              <div class="tabs" data-tabs="response" role="tablist" aria-label="响应视图">
+                <button type="button" data-tab="body" class="active" role="tab">响应预览</button>
+                <button type="button" data-tab="headers" role="tab">响应头</button>
+                <button type="button" data-tab="request" role="tab">请求信息</button>
+              </div>
+              <div class="response-meta">
+                <span class="status-chip" id="responseStatus">—</span>
+                <span id="responseTime"></span>
+                <span id="responseSize"></span>
+              </div>
+            </div>
+            <div class="response-body" id="responseBody">
+              <div class="response-empty">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m5 7 5 5-5 5M12 17h7" />
+                </svg>
+                <p>点击「发送请求」查看真实响应</p>
+                <small>请求经过本站中转，自动带上 CORS 与缓存头</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <script src="/assets/app.js" defer></script>
+  </body>
+</html>
