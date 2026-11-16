@@ -1131,6 +1131,7 @@
     if (!state.active || state.sending) return;
     const endpoint = state.active;
     const path = $('#urlPreview').textContent;
+    const debugPath = path + (path.includes('?') ? '&' : '?') + '__proxy=1';
     const button = $('#sendBtn');
     const status = $('#responseStatus');
 
@@ -1144,7 +1145,7 @@
 
     const started = performance.now();
     try {
-      const response = await fetch(path, { headers: { accept: '*/*' } });
+      const response = await fetch(debugPath, { headers: { accept: '*/*' } });
       const blob = await response.blob();
       const ms = performance.now() - started;
       const contentType = response.headers.get('content-type') || 'application/octet-stream';
@@ -1184,7 +1185,7 @@
         kind,
         contentType,
         headers,
-        url: path,
+        url: debugPath,
         ms,
         size: blob.size,
         pretty,
@@ -1210,7 +1211,7 @@
         kind: 'error',
         contentType: 'text/plain',
         headers: [],
-        url: path,
+        url: debugPath,
         ms,
         size: 0,
         pretty: message,
