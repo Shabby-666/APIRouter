@@ -429,9 +429,16 @@ svg.icon {
   color: var(--ink);
 }
 
-.icon-btn .icon {
+.icon-btn .icon,
+.icon-btn svg {
   width: 15px;
   height: 15px;
+  display: block;
+}
+
+.github-link svg {
+  fill: currentColor;
+  stroke: none;
 }
 
 /* ---------- 首屏 ---------- */
