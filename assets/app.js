@@ -449,7 +449,7 @@
 
   function rowHtml(endpoint) {
     return `
-      <article class="api-row" data-open="${endpoint.id}">
+      <article class="api-row" data-doc="${endpoint.id}" title="查看 API 文档">
         <span class="api-icon" aria-hidden="true">${endpointIcon(endpoint)}</span>
         <div class="api-main">
           <div class="api-heading">
@@ -464,7 +464,7 @@
         </div>
         <div class="api-actions">
           <button class="text-btn" type="button" data-copy="${endpoint.id}" title="复制示例地址">复制</button>
-          <button class="text-btn api-open" type="button" data-open-btn="${endpoint.id}">调试</button>
+          <button class="text-btn api-open" type="button" data-open-btn="${endpoint.id}" title="打开调试界面">调试</button>
         </div>
       </article>`;
   }
@@ -570,7 +570,8 @@
     if (latencyNode) latencyNode.textContent = avg === null ? '—' : formatMs(avg);
 
     $$('#grid .api-row').forEach((row) => {
-      const endpoint = state.endpoints.find((e) => e.id === row.dataset.open);
+      const id = row.dataset.doc || row.dataset.open;
+      const endpoint = state.endpoints.find((e) => e.id === id);
       if (!endpoint) return;
       const status = row.querySelector('.api-status');
       if (status) status.outerHTML = statusHtml(endpoint);
@@ -821,11 +822,13 @@
       note.hidden = true;
     }
     const docs = $('#modalDocs');
-    if (endpoint.docs) {
-      docs.href = endpoint.docs;
+    if (docs) {
       docs.hidden = false;
-    } else {
-      docs.hidden = true;
+      docs.onclick = (e) => {
+        e.preventDefault();
+        closeModal();
+        openDocs(endpoint);
+      };
     }
 
     const values = paramsOf(endpoint);
@@ -917,11 +920,124 @@
     }
   }
 
+  function renderParamTable(endpoint) {
+    const params = endpoint.params || [];
+    if (!params.length) {
+      return '<p class="docs-muted">此接口无需参数，直接请求即可（部分接口仍支持可选透传参数）。</p>';
+    }
+    const rows = params.map((p) => {
+      const req = p.required ? '<span class="docs-badge req">必填</span>' : '<span class="docs-badge opt">可选</span>';
+      const opts = p.options && p.options.length ? `<div class="docs-sub"><b>可选值：</b>${p.options.map((o) => `<code>${escapeHtml(o === '' ? '(空)' : o)}</code>`).join(' ')}</div>` : '';
+      const ex = p.example ? `<div class="docs-sub"><b>示例：</b><code>${escapeHtml(p.example)}</code></div>` : '';
+      return `<tr>
+        <td><code>${escapeHtml(p.key)}</code><div>${escapeHtml(p.label || '')}</div></td>
+        <td>${req}</td>
+        <td>${escapeHtml(p.desc || '')}${opts}${ex}</td>
+      </tr>`;
+    }).join('');
+    return `<div class="docs-table-wrap"><table class="docs-table"><thead><tr><th>参数</th><th>必填</th><th>说明 / 示例</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  function upstreamUsageHtml(endpoint) {
+    const up = escapeHtml(endpoint.upstream || '—');
+    const kind = endpoint.kind === 'local' ? '本地实现（本站服务直接处理，无需外部上游调用）' : 'HTTP 上游中转';
+    let mapping = '';
+    if (endpoint.kind !== 'local') {
+      mapping = `<p>本站会将你传入的参数按接口定义映射/透传到上游接口，并返回处理后的结果（除非使用 <code>__raw=1</code> 获取上游原始响应）。</p>`;
+      if ((endpoint.path || '').includes('{')) {
+        mapping += `<p>路径中的 <code>{参数}</code> 会被替换为对应参数值后再请求上游。</p>`;
+      }
+      if (endpoint.process) {
+        mapping += `<p>响应处理：<code>${escapeHtml(endpoint.process)}</code>（本站会对上游响应做结构整理/字段提取，便于直接使用）。</p>`;
+      }
+    } else {
+      mapping = `<p>该接口由本站本地逻辑实现，输入参数与行为以本文档为准，返回结构化 JSON 结果。</p>`;
+    }
+    return `
+      <section class="docs-section">
+        <h4>上游 / 实现方式</h4>
+        <dl class="docs-dl">
+          <div><dt>类型</dt><dd>${kind}</dd></div>
+          <div><dt>上游地址</dt><dd><code>${up}</code></dd></div>
+          <div><dt>本站路径</dt><dd><code>${escapeHtml(endpoint.path)}</code></dd></div>
+          <div><dt>缓存 (TTL)</dt><dd>${endpoint.ttl > 0 ? `${endpoint.ttl} 秒` : '实时 / 不缓存'}</dd></div>
+        </dl>
+        ${mapping}
+      </section>`;
+  }
+
+  function openDocs(endpoint) {
+    if (!endpoint) return;
+    const modal = $('#docsModal');
+    const cat = categoryMeta(endpoint.category);
+    $('#docsIcon').innerHTML = endpointIcon(endpoint);
+    $('#docsTitle').textContent = endpoint.name;
+    $('#docsPath').textContent = endpoint.path;
+    const example = endpoint.example || endpoint.path;
+    const tags = (endpoint.tags || []).map((t) => `<span class="docs-tag">${escapeHtml(t)}</span>`).join('');
+    const note = endpoint.note ? `<section class="docs-section docs-note"><h4>注意事项</h4><p>${escapeHtml(endpoint.note)}</p></section>` : '';
+    const common = `<section class="docs-section"><h4>通用参数（本站支持）</h4>
+      <ul class="docs-list">
+        <li><code>__pick</code>：从 JSON 响应中提取字段，如 <code>data.0.name</code></li>
+        <li><code>__raw=1</code>：返回上游原始响应（不做本站加工）</li>
+        <li><code>__download=1</code>：以附件形式下载（适用于图片/文件类响应）</li>
+        <li>未传参数时，本站可能自动填充示例参数以便直接调用（以实际返回为准）</li>
+      </ul></section>`;
+    $('#docsBody').innerHTML = `
+      <div class="docs-hero">
+        <p>${escapeHtml(endpoint.desc || '')}</p>
+        <div class="docs-meta-line">${tags}<span class="docs-tag muted">分类：${escapeHtml(cat.name || '')}</span><span class="docs-tag muted">ID：${escapeHtml(endpoint.id)}</span></div>
+      </div>
+      <section class="docs-section">
+        <h4>请求方式</h4>
+        <p>通过本站统一入口调用（GET）：</p>
+        <pre class="docs-pre"><code>${escapeHtml(absolute(endpoint.path))}</code></pre>
+        <p>示例请求：</p>
+        <pre class="docs-pre"><code>${escapeHtml(absolute(example))}</code></pre>
+      </section>
+      <section class="docs-section">
+        <h4>请求参数</h4>
+        ${renderParamTable(endpoint)}
+      </section>
+      ${upstreamUsageHtml(endpoint)}
+      ${note}
+      ${common}
+      <section class="docs-section">
+        <h4>调用示例</h4>
+        <pre class="docs-pre"><code>${escapeHtml(`curl -s "${absolute(example)}"`)}\n\n${escapeHtml(`fetch("${absolute(example)}").then(r=>r.json()).then(console.log)`)}\n\n${escapeHtml(`import requests\nprint(requests.get("${absolute(example)}").json())`)}</code></pre>
+      </section>
+    `;
+    const debugBtn = $('#docsDebugBtn');
+    if (debugBtn) {
+      debugBtn.onclick = () => { closeDocs(); openModal(endpoint); };
+    }
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    try { history.replaceState(null, '', `#doc=${endpoint.id}`); } catch {}
+  }
+
+  function closeDocs() {
+    const modal = $('#docsModal');
+    if (modal) modal.hidden = true;
+    document.body.style.overflow = '';
+    if (location.hash.startsWith('#doc=')) {
+      try { history.replaceState(null, '', `${location.pathname}${location.search}`); } catch {}
+    }
+  }
+
   function openFromHash() {
-    const match = /^#api=([\w-]+)$/.exec(location.hash || '');
-    if (!match) return;
-    const endpoint = endpointById(decodeURIComponent(match[1]));
-    if (endpoint) openModal(endpoint);
+    const hash = location.hash || '';
+    let match = /^#doc=([\w-]+)$/.exec(hash);
+    if (match) {
+      const endpoint = endpointById(decodeURIComponent(match[1]));
+      if (endpoint) openDocs(endpoint);
+      return;
+    }
+    match = /^#api=([\w-]+)$/.exec(hash);
+    if (match) {
+      const endpoint = endpointById(decodeURIComponent(match[1]));
+      if (endpoint) openModal(endpoint);
+    }
   }
 
   function renderEmptyResponse() {
@@ -1178,16 +1294,22 @@
     $('#grid').addEventListener('click', async (event) => {
       const copy = event.target.closest('[data-copy]');
       if (copy) {
+        event.stopPropagation();
         const endpoint = endpointById(copy.dataset.copy);
         if (endpoint) copyText(absolute(endpoint.example), '示例地址已复制');
         return;
       }
-      const button = event.target.closest('[data-open-btn]');
-      const row = event.target.closest('[data-open]');
-      const id = (button && button.dataset.openBtn) || (row && row.dataset.open);
-      if (!id) return;
-      const endpoint = endpointById(id);
-      if (endpoint) openModal(endpoint);
+      const debugBtn = event.target.closest('[data-open-btn]');
+      if (debugBtn) {
+        event.stopPropagation();
+        const endpoint = endpointById(debugBtn.dataset.openBtn);
+        if (endpoint) openModal(endpoint);
+        return;
+      }
+      const row = event.target.closest('[data-doc]');
+      if (!row) return;
+      const endpoint = endpointById(row.dataset.doc);
+      if (endpoint) openDocs(endpoint);
     });
 
     $('#clearSearch').addEventListener('click', () => {
@@ -1232,6 +1354,12 @@
     $('#modal').addEventListener('click', (event) => {
       if (event.target.closest('[data-close]')) closeModal();
     });
+    const docsModal = $('#docsModal');
+    if (docsModal) {
+      docsModal.addEventListener('click', (event) => {
+        if (event.target.closest('[data-docs-close]')) closeDocs();
+      });
+    }
 
     $('#paramForm').addEventListener('input', updateUrlPreview);
     $('#paramForm').addEventListener('change', updateUrlPreview);
@@ -1290,7 +1418,9 @@
         $('#search').select();
       }
       if (event.key === 'Escape') {
-        if (!$('#modal').hidden) closeModal();
+        const docsModal = $('#docsModal');
+        if (docsModal && !docsModal.hidden) closeDocs();
+        else if (!$('#modal').hidden) closeModal();
         else if (document.activeElement === $('#search')) $('#search').blur();
       }
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && !$('#modal').hidden) {

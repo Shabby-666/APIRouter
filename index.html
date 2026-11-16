@@ -16,7 +16,7 @@
     />
     <meta property="og:type" content="website" />
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/assets/styles.css?v=20261115-filters2" />
+    <link rel="stylesheet" href="/assets/styles.css?v=20261116-docs" />
     <script>
       (function () {
         try {
@@ -196,7 +196,7 @@
           <div>
             <p class="eyebrow">接口目录</p>
             <h2>按用途挑一个</h2>
-            <p>全部接口已带示例参数。点「调试」发送真实请求，点「复制」拿到可直接运行的地址。</p>
+            <p>全部接口已带示例参数。点击卡片查看本站 API 文档，点「调试」发送真实请求，点「复制」拿到可直接运行的地址。</p>
           </div>
           <div class="catalog-tools">
             <span class="result-count" id="resultCount">—</span>
@@ -448,7 +448,7 @@ vercel --prod</code></pre>
             <code id="modalPath">/api/r/</code>
           </div>
           <div class="modal-head-actions">
-            <a class="text-btn" id="modalDocs" href="#" target="_blank" rel="noreferrer">上游文档</a>
+            <button class="text-btn" id="modalDocs" type="button">API 文档</button>
             <button class="icon-btn" type="button" data-close aria-label="关闭">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M5 5l14 14M19 5 5 19" />
@@ -522,7 +522,29 @@ vercel --prod</code></pre>
       </div>
     </div>
 
+    <div class="modal docs-modal" id="docsModal" hidden>
+      <div class="modal-backdrop" data-docs-close></div>
+      <div class="modal-panel docs-panel" role="dialog" aria-modal="true" aria-labelledby="docsTitle">
+        <header class="modal-head">
+          <span class="modal-icon" id="docsIcon" aria-hidden="true"></span>
+          <div class="modal-title">
+            <h3 id="docsTitle">API 文档</h3>
+            <code id="docsPath">/api/r/</code>
+          </div>
+          <div class="modal-head-actions">
+            <button class="text-btn" id="docsDebugBtn" type="button">调试接口</button>
+            <button class="icon-btn" type="button" data-docs-close aria-label="关闭">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 5l14 14M19 5 5 19" />
+              </svg>
+            </button>
+          </div>
+        </header>
+        <div class="docs-body" id="docsBody"></div>
+      </div>
+    </div>
+
     <div class="toasts" id="toasts" aria-live="polite"></div>
-    <script src="/assets/app.js?v=20261115-filters2" defer></script>
+    <script src="/assets/app.js?v=20261116-docs" defer></script>
   </body>
 </html>
