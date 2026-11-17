@@ -1963,6 +1963,46 @@ main {
   font-size: 10.5px;
 }
 
+.redirect-preview {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  align-content: start;
+}
+.redirect-icon {
+  color: var(--accent);
+}
+.redirect-icon .icon {
+  width: 24px;
+  height: 24px;
+}
+.redirect-title {
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+}
+.redirect-desc {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.redirect-desc code {
+  padding: 0 3px;
+  background: var(--code-bg);
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+.redirect-preview .response-pre code {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.redirect-audio {
+  width: 100%;
+  max-width: 360px;
+  height: 34px;
+}
+
 .header-list {
   display: grid;
   gap: 0;

@@ -976,6 +976,7 @@
     const example = endpoint.example || endpoint.path;
     const tags = (endpoint.tags || []).map((t) => `<span class="docs-tag">${escapeHtml(t)}</span>`).join('');
     const note = endpoint.note ? `<section class="docs-section docs-note"><h4>注意事项</h4><p>${escapeHtml(endpoint.note)}</p></section>` : '';
+    const redirectNote = endpoint.redirect ? `<section class="docs-section docs-note"><h4>重定向接口</h4><p>该接口直接 <code>302</code> 跳转到上游资源，由客户端直连上游，本站不代理数据流量（避免服务器 IP 被限流）。请在 <code>&lt;audio&gt;</code> / <code>&lt;img&gt;</code> / 浏览器地址栏中使用。</p></section>` : '';
     const common = `<section class="docs-section"><h4>通用参数（本站支持）</h4>
       <ul class="docs-list">
         <li><code>__pick</code>：从 JSON 响应中提取字段，如 <code>data.0.name</code></li>
@@ -1001,10 +1002,14 @@
       </section>
       ${upstreamUsageHtml(endpoint)}
       ${note}
+      ${redirectNote}
       ${common}
       <section class="docs-section">
         <h4>调用示例</h4>
-        <pre class="docs-pre"><code>${escapeHtml(`curl -s "${absolute(example)}"`)}\n\n${escapeHtml(`fetch("${absolute(example)}").then(r=>r.json()).then(console.log)`)}\n\n${escapeHtml(`import requests\nprint(requests.get("${absolute(example)}").json())`)}</code></pre>
+        ${endpoint.redirect
+          ? `<p>该接口返回 <code>302</code> 重定向到上游资源（如音频），请用 <code>&lt;audio&gt;</code>、<code>&lt;img&gt;</code> 或浏览器地址栏直接使用，不要用 <code>fetch</code> 读取（会被跨域策略拦截）：</p>
+        <pre class="docs-pre"><code>${escapeHtml(`<audio controls src="${absolute(example)}"></audio>`)}\n\n${escapeHtml(`curl -sL "${absolute(example)}" -o audio.mp3`)}</code></pre>`
+          : `<pre class="docs-pre"><code>${escapeHtml(`curl -s "${absolute(example)}"`)}\n\n${escapeHtml(`fetch("${absolute(example)}").then(r=>r.json()).then(console.log)`)}\n\n${escapeHtml(`import requests\nprint(requests.get("${absolute(example)}").json())`)}</code></pre>`}
       </section>
     `;
     const debugBtn = $('#docsDebugBtn');
@@ -1118,6 +1123,23 @@
       return;
     }
 
+    if (last.kind === 'redirect') {
+      const target = absolute(last.url);
+      body.innerHTML = `
+        <div class="redirect-preview">
+          <div class="redirect-icon">${icon('link')}</div>
+          <p class="redirect-title">302 重定向接口</p>
+          <p class="redirect-desc">该接口会跳转到上游资源（如音频文件），浏览器出于安全策略不允许调试面板直接读取跨域响应，因此无法在此预览内容。</p>
+          <p class="redirect-desc">请在 <code>&lt;audio&gt;</code> 标签、播放器或浏览器地址栏中直接使用下面的地址：</p>
+          <pre class="response-pre"><code>${escapeHtml(target)}</code></pre>
+          <div class="image-tools">
+            <audio class="redirect-audio" controls preload="none" src="${escapeHtml(target)}"></audio>
+            <a class="text-btn" href="${escapeHtml(target)}" target="_blank" rel="noreferrer">新窗口打开</a>
+          </div>
+        </div>`;
+      return;
+    }
+
     body.innerHTML = `<pre class="response-pre">${escapeHtml(last.body)}</pre>`;
   }
 
@@ -1131,9 +1153,24 @@
     if (!state.active || state.sending) return;
     const endpoint = state.active;
     const path = $('#urlPreview').textContent;
-    const debugPath = path + (path.includes('?') ? '&' : '?') + '__proxy=1';
     const button = $('#sendBtn');
     const status = $('#responseStatus');
+
+    // 重定向接口不能通过 fetch 预览（跟随跨域跳转会被 CORS 拦截），改用专用预览。
+    if (endpoint.redirect) {
+      state.last = { kind: 'redirect', url: path, ms: 0, size: 0, status: 302, headers: [] };
+      status.className = 'status-chip ok';
+      status.textContent = '302 重定向';
+      $('#responseTime').textContent = '—';
+      $('#responseSize').textContent = '—';
+      state.responseTab = 'body';
+      setTabs('response', 'body');
+      renderResponse();
+      markDebug();
+      return;
+    }
+
+    const debugPath = path + (path.includes('?') ? '&' : '?') + '__proxy=1';
 
     state.sending = true;
     button.classList.add('loading');
