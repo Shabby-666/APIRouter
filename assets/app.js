@@ -1133,9 +1133,9 @@
           <p class="redirect-desc">请在 <code>&lt;audio&gt;</code> 标签、播放器或浏览器地址栏中直接使用下面的地址：</p>
           <pre class="response-pre"><code>${escapeHtml(target)}</code></pre>
           <div class="image-tools">
-            <audio class="redirect-audio" controls preload="none" src="${escapeHtml(target)}"></audio>
-            <a class="text-btn" href="${escapeHtml(target)}" target="_blank" rel="noreferrer">新窗口打开</a>
+            <a class="redirect-open" href="${escapeHtml(target)}" target="_blank" rel="noreferrer">新窗口打开（播放 / 下载）</a>
           </div>
+          <p class="redirect-desc">提示：请在新窗口打开或在浏览器地址栏访问上面的地址。由于目标为跨域音频，调试面板内无法内嵌预览。</p>
         </div>`;
       return;
     }

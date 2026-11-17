@@ -2002,6 +2002,17 @@ main {
   max-width: 360px;
   height: 34px;
 }
+.redirect-open {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 7px 14px;
+  border: 1px solid var(--btn-bg);
+  border-radius: var(--radius);
+  background: var(--btn-bg);
+  color: var(--btn-ink);
+  font-size: 12px;
+}
+.redirect-open:hover { opacity: 0.88; }
 
 .header-list {
   display: grid;
